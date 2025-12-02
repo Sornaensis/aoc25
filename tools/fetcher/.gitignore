@@ -1,0 +1,19 @@
+# Stack / Cabal build artifacts
+.stack-work/
+dist/
+dist-*
+
+# GHC intermediates
+*.hi
+*.o
+*.hie
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+
+# Profiling / runtime logs
+*.prof
+*.aux
+*.hp
+*.eventlog

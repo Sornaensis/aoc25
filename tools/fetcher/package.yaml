@@ -1,0 +1,24 @@
+name: fetcher
+version: 0.1.0.0
+synopsis: Fetch Advent of Code puzzle statements and inputs
+maintainer: Sornaensis
+license: MIT
+category: Tooling
+
+dependencies:
+  - base >= 4.16 && < 5
+  - optparse-applicative
+  - http-conduit
+  - http-client
+  - tagsoup
+  - text
+  - bytestring
+  - directory
+  - filepath
+
+executables:
+  fetcher:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -Wall

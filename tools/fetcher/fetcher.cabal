@@ -1,0 +1,32 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.2.
+--
+-- see: https://github.com/sol/hpack
+
+name:           fetcher
+version:        0.1.0.0
+synopsis:       Fetch Advent of Code puzzle statements and inputs
+category:       Tooling
+maintainer:     Sornaensis
+license:        MIT
+build-type:     Simple
+
+executable fetcher
+  main-is: Main.hs
+  other-modules:
+      Paths_fetcher
+  hs-source-dirs:
+      app
+  ghc-options: -Wall
+  build-depends:
+      base >=4.16 && <5
+    , bytestring
+    , directory
+    , filepath
+    , http-client
+    , http-conduit
+    , optparse-applicative
+    , tagsoup
+    , text
+  default-language: Haskell2010
