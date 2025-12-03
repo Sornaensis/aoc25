@@ -4,13 +4,16 @@
 module Main where
 
 import Control.Parallel (par, pseq)
-import Control.Parallel.Strategies (parMap, rpar)
+import Control.Parallel.Strategies (parMap, rpar, parList, rdeepseq, using)
 import Control.DeepSeq (NFData)
 
+import Data.Foldable (foldr')
 import Data.Function ((&))
-import Data.List (concat)
+import Data.List.Split (chunksOf)
+import Data.List (concat, intercalate,scanl')
 import Data.Text (Text, pattern Empty, pattern (:<), pattern (:>))
 import qualified Data.Text as T
+import qualified Data.Set as Set
 
 import System.Exit (exitFailure)
 import System.IO (readFile)
@@ -37,39 +40,38 @@ processRanges = T.splitOn "," .> map ( T.splitOn "-" .> tuple )
 inputFile :: FilePath
 inputFile = "input.txt"
 
-recursivePolishPalindrome :: T.Text -> Bool
-recursivePolishPalindrome = go ""
-    where
-    go _   Empty                                     = False
-    go as' t@( a :< as ) | as' == t                  = True
-                         | T.length as' > T.length t = False
-                         | otherwise                 = let prefix      = as' `T.isPrefixOf` t
-                                                           ( las, lt ) = ( T.length as', T.length t )
-                                                           fits        = lt `rem` las == 0
-                                                           ct          = lt `div` las
-                                                           expand      = las > 0 && prefix && fits && ( take ct (repeat as') & T.concat .> (==t) )
-                                                           recur       = go ( T.snoc as' a ) as
-                                                       in expand `par` ( recur `pseq` ( expand || recur ) )
-
-polishPalindrome :: T.Text -> Bool
-polishPalindrome = go ""
-    where
-    go _   Empty                                     = False
-    go as' t@( a :< as ) | as' == t                  = True
-                         | T.length as' > T.length t = False
-                         | otherwise                 = go ( T.snoc as' a ) as
-
 solvePart1 :: [(Integer,Integer)] -> Integer
-solvePart1 = ( parMap rpar ( ranges .> map showText .> filter polishPalindrome .> map readTextInteger ) ) .> concat .> sum
-    where
-    ranges (a, b) | a < b     = [a..b]
-                  | otherwise = undefined
+solvePart1 = rangesM False & solve
 
 solvePart2 :: [(Integer,Integer)] -> Integer
-solvePart2 = ( parMap rpar ( ranges .> map showText .> filter recursivePolishPalindrome .> map readTextInteger ) ) .> concat .> sum
+solvePart2 = rangesM True & solve
+
+solve :: ((Integer, Integer) -> [[Integer]]) -> [(Integer,Integer)] -> Integer
+solve f rs = rs & parMap rdeepseq f .> concat .> concat .> Set.fromList .> Set.toList .> sum
+
+rangesM :: Bool -> (Integer, Integer) -> [[Integer]]
+rangesM split (a, b) =  let  ( la, lb ) = (length . show $ a, length . show $ b)
+                             range      = [la..lb]
+                        in range & parMap rpar gen & concat
     where
-    ranges (a, b) | a < b     = [a..b]
-                  | otherwise = undefined
+    iterate x n     = let ct         = x`div`n
+                          max        = repeat 9 & take (T.length start) .> map showText .> T.concat .> readTextInteger
+                          sequence   = take ct $ repeat (10^(n-1))
+                          startNum   = readTextInteger start
+                          start      = sequence & map showText .> foldr' (<>) ""
+                          inc        = start & T.reverse .> readTextInteger
+                          rs         = [startNum,startNum+inc..b]
+                          inRange n  =  n >= startNum && n <= max && n >= a && n <= b
+                      in if ct < 2 
+                            then [] 
+                            else 
+                                filter inRange rs               
+    gen    1        = []
+    gen    n        = let chunks = if split 
+                                    then filter ((n`mod`) .> (==0)) [1..n] 
+                                    else [n] & filter even .> map (`div`2)
+                          results = parMap rpar (iterate n) chunks
+                      in  results `using` parList rdeepseq
 
 main :: IO ()
 main = do
