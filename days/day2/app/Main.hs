@@ -3,6 +3,7 @@
 
 module Main where
 
+import Control.Parallel (par, pseq)
 import Control.Parallel.Strategies (parMap, rpar)
 import Control.DeepSeq (NFData)
 
@@ -36,6 +37,19 @@ processRanges = T.splitOn "," .> map ( T.splitOn "-" .> tuple )
 inputFile :: FilePath
 inputFile = "input.txt"
 
+recursivePolishPalindrome :: T.Text -> Bool
+recursivePolishPalindrome = go ""
+    where
+    go _   Empty                                     = False
+    go as' t@( a :< as ) | as' == t                  = True
+                         | T.length as' > T.length t = False
+                         | otherwise                 = let prefix      = as' `T.isPrefixOf` t
+                                                           ( las, lt ) = ( T.length as', T.length t )
+                                                           fits        = lt `rem` las == 0
+                                                           ct          = lt `div` las
+                                                           expand      = las > 0 && prefix && fits && ( take ct (repeat as') & T.concat .> (==t) )
+                                                           recur       = go ( T.snoc as' a ) as
+                                                       in expand `par` ( recur `pseq` ( expand || recur ) )
 
 polishPalindrome :: T.Text -> Bool
 polishPalindrome = go ""
@@ -45,9 +59,14 @@ polishPalindrome = go ""
                          | T.length as' > T.length t = False
                          | otherwise                 = go ( T.snoc as' a ) as
 
--- | 
 solvePart1 :: [(Integer,Integer)] -> Integer
 solvePart1 = ( parMap rpar ( ranges .> map showText .> filter polishPalindrome .> map readTextInteger ) ) .> concat .> sum
+    where
+    ranges (a, b) | a < b     = [a..b]
+                  | otherwise = undefined
+
+solvePart2 :: [(Integer,Integer)] -> Integer
+solvePart2 = ( parMap rpar ( ranges .> map showText .> filter recursivePolishPalindrome .> map readTextInteger ) ) .> concat .> sum
     where
     ranges (a, b) | a < b     = [a..b]
                   | otherwise = undefined
@@ -57,8 +76,9 @@ main = do
     contents <- readFile inputFile
     case lines contents of
         [content]  -> do
-            let solution = content & T.pack .> processRanges .> solvePart1
-            putStr "Part 1: " >> print solution
-            putStrLn "Part 2: <todo>"
+            let solution1 = content & T.pack .> processRanges .> solvePart1
+            putStr "Part 1: " >> print solution1
+            let solution2 = content & T.pack .> processRanges .> solvePart2
+            putStr "Part 2: " >> print solution2
         []         -> putStrLn "Input is empty." >> exitFailure
         _          -> putStrLn "Input is invalid." >> exitFailure
