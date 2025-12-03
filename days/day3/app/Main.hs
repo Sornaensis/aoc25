@@ -1,8 +1,6 @@
 module Main where
 
-import Control.Parallel (par, pseq)
-import Control.Parallel.Strategies (parMap, rpar, parList, rdeepseq, using)
-import Control.DeepSeq (NFData)
+import Control.Parallel.Strategies (parMap, rpar)
 
 import Data.Function ((&))
 import Data.Foldable (foldr')
@@ -17,19 +15,14 @@ infixr 9 .>
 inputFile :: FilePath
 inputFile = "input.txt"
 
-solvePart1 :: [[Integer]] -> Integer
-solvePart1 = parMap rpar solve .> sum
+solvePart :: Int -> [[Integer]] -> Integer
+solvePart n = parMap rpar (solve n) .> sum
     where
-    cmp   e@(n,ix)  (a,ix') | a > n     = (a,ix')
-                            | otherwise = e
-    solve xs = let bs       = xs & flip zip [1..]
-                   size     = length bs
-                   pos      = if fx == size then (/=fx) else (>fx)
-                   (f, fx)  = bs & foldr' cmp (-1,-1)
-                   (s, sx)  = bs & filter (snd .> pos) .> foldr' cmp (-1,-1)
-                in  if fx < sx 
-                        then f * 10 + s 
-                        else s * 10 + f
+    solve n xs = let d         = length xs - n
+                     (s, left) = foldl' go ([], d) xs
+                  in s & drop left .> reverse .> map show .> concat .> read
+    go (s:ss,  d) n | d > 0 && s < n = go (ss, d-1) n
+    go (stack, d) n                  = (n:stack, d)
 
 main :: IO ()
 main = do
@@ -38,5 +31,7 @@ main = do
         [] -> putStrLn "Input is empty." >> exitFailure
         cs  -> do
             let banks = cs & map ( map (:[]) .> map read )
-            let solution1 = solvePart1 banks
+            let solution1 = banks & solvePart 2
             putStr "Part 1: " >> print solution1
+            let solution2 = banks & solvePart 12
+            putStr "Part 2: " >> print solution2
