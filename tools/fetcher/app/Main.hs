@@ -24,9 +24,13 @@ data Args = Args
     { argDay :: Int
     , argYear :: Int
     , argOutDir :: FilePath
+    , argRootDir :: FilePath
     , argSession :: Maybe String
     , argDoSetup :: Bool
     }
+
+defaultRootDir :: FilePath
+defaultRootDir = ".." </> ".."
 
 argsParser :: Parser Args
 argsParser =
@@ -34,6 +38,7 @@ argsParser =
         <$> option auto (long "day" <> metavar "DAY" <> help "Puzzle day (1-25)" <> completeWith (map show ([1 .. 25] :: [Int])))
         <*> option auto (long "year" <> metavar "YEAR" <> help "Puzzle year")
         <*> strOption (long "out-dir" <> metavar "DIR" <> value "." <> showDefault <> help "Directory that receives problem.md/input.txt")
+        <*> strOption (long "root-dir" <> metavar "DIR" <> value defaultRootDir <> showDefaultWith id <> help "Project root; templates/day and --out-dir are resolved relative to it")
         <*> optional (strOption (long "session" <> metavar "TOKEN" <> help "Explicit AoC session token"))
         <*> switch (long "do-setup" <> help "Copy templates/day/* into --out-dir before writing files")
 
@@ -145,10 +150,11 @@ main = do
     session <- requireSession args
     let day = argDay args
         year = argYear args
-        outDir = argOutDir args
+        rootDir = argRootDir args
+        outDir = rootDir </> argOutDir args
         baseUrl = "https://adventofcode.com/" <> show year <> "/day/" <> show day
     when (argDoSetup args) $ do
-        let templateRoot = "templates" </> "day"
+        let templateRoot = rootDir </> "templates" </> "day"
         copyTemplateScaffold templateRoot outDir
     putStrLn $ "Fetching puzzle page from: " <> baseUrl
     problemHtml <- fetchText baseUrl session
