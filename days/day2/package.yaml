@@ -1,0 +1,21 @@
+name: day2
+version: 0.1.0.0
+license: MIT
+github: "Sornaensis/aoc25"
+author: "Sornaensis"
+maintainer: "Sornaensis"
+extra-source-files:
+  - problem.md
+  - input.txt
+
+executables:
+  day2-exe:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -Wall
+    dependencies:
+      - base >= 4.7 && < 5
+      - text >= 2.1.2 && < 3
+      - parallel >= 3.2.2 && < 4
+      - deepseq
