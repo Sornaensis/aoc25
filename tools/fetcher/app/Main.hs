@@ -3,7 +3,7 @@
 module Main (main) where
 
 import Control.Exception (displayException, try)
-import Control.Monad (when)
+import Control.Monad (forM_, unless, when)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
@@ -11,7 +11,7 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.Text.IO as TIO
 import Network.HTTP.Simple
 import Options.Applicative
-import System.Directory (createDirectoryIfMissing)
+import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, doesFileExist, listDirectory)
 import System.Environment (lookupEnv)
 import System.FilePath ((</>))
 import Text.HTML.TagSoup (renderTags)
@@ -25,6 +25,7 @@ data Args = Args
     , argYear :: Int
     , argOutDir :: FilePath
     , argSession :: Maybe String
+    , argDoSetup :: Bool
     }
 
 argsParser :: Parser Args
@@ -34,6 +35,7 @@ argsParser =
         <*> option auto (long "year" <> metavar "YEAR" <> help "Puzzle year")
         <*> strOption (long "out-dir" <> metavar "DIR" <> value "." <> showDefault <> help "Directory that receives problem.md/input.txt")
         <*> optional (strOption (long "session" <> metavar "TOKEN" <> help "Explicit AoC session token"))
+        <*> switch (long "do-setup" <> help "Copy templates/day/* into --out-dir before writing files")
 
 requireSession :: Args -> IO String
 requireSession a = do
@@ -115,6 +117,27 @@ writeFiles outDir markdown input = do
     TIO.writeFile (outDir </> "problem.md") markdown
     TIO.writeFile (outDir </> "input.txt") input
 
+copyTemplateScaffold :: FilePath -> FilePath -> IO ()
+copyTemplateScaffold templateRoot outDir = do
+    exists <- doesDirectoryExist templateRoot
+    unless exists $ fail ("Template directory does not exist: " <> templateRoot)
+    putStrLn $ "Copying template contents from " <> templateRoot <> " into " <> outDir
+    copyDir templateRoot outDir
+  where
+    copyDir src dst = do
+        createDirectoryIfMissing True dst
+        entries <- listDirectory src
+        forM_ entries $ \entry -> do
+            let srcPath = src </> entry
+                dstPath = dst </> entry
+            isDir <- doesDirectoryExist srcPath
+            if isDir
+                then copyDir srcPath dstPath
+                else do
+                    fileExists <- doesFileExist dstPath
+                    when fileExists $ putStrLn ("Overwriting file: " <> dstPath)
+                    copyFile srcPath dstPath
+
 main :: IO ()
 main = do
     args <- execParser (info (argsParser <**> helper) (fullDesc <> progDesc "Fetch AoC puzzle statement and input"))
@@ -124,6 +147,9 @@ main = do
         year = argYear args
         outDir = argOutDir args
         baseUrl = "https://adventofcode.com/" <> show year <> "/day/" <> show day
+    when (argDoSetup args) $ do
+        let templateRoot = "templates" </> "day"
+        copyTemplateScaffold templateRoot outDir
     putStrLn $ "Fetching puzzle page from: " <> baseUrl
     problemHtml <- fetchText baseUrl session
     let inputUrl = baseUrl <> "/input"
