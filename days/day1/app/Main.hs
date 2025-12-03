@@ -3,6 +3,7 @@ module Main where
 import System.Exit (exitFailure)
 import System.IO (readFile)
 
+import Data.List (scanl')
 import Data.Function ((&))
 import qualified Data.Text as T
 import Text.Printf (printf)
@@ -15,7 +16,7 @@ inputFile :: FilePath
 inputFile = "input.txt"
 
 solvepart1 :: [Int] -> Int
-solvepart1 = scanl proc 50 .> filter (==0) .> length
+solvepart1 = scanl' proc 50 .> filter (==0) .> length
     where 
     proc :: Int -> Int -> Int
     proc a b = ( a + b ) `mod` 100
@@ -29,7 +30,7 @@ processpart1 = map ( T.strip .> T.unpack .> rotation .> (`mod`100) )
         rotation _ = undefined
 
 solvepart2 :: [Int] -> Int
-solvepart2 = scanl proc (50,0) .> map snd .> last
+solvepart2 = scanl' proc (50,0) .> map snd .> last
     where 
     proc :: (Int,Int) -> Int -> (Int,Int)
     proc (a1,a2) b = 
