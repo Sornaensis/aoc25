@@ -143,6 +143,23 @@ copyTemplateScaffold templateRoot outDir = do
                     when fileExists $ putStrLn ("Overwriting file: " <> dstPath)
                     copyFile srcPath dstPath
 
+ensureTemplateSetup :: FilePath -> FilePath -> Int -> IO ()
+ensureTemplateSetup templateRoot outDir day = do
+    let templatePackage = templateRoot </> "package.yaml"
+    packageExists <- doesFileExist templatePackage
+    unless packageExists $ fail ("Template missing package.yaml: " <> templatePackage)
+    copyTemplateScaffold templateRoot outDir
+    let destinationPackage = outDir </> "package.yaml"
+    putStrLn $ "Customizing template placeholders in " <> destinationPackage
+    replaceDayPlaceholder destinationPackage day
+
+replaceDayPlaceholder :: FilePath -> Int -> IO ()
+replaceDayPlaceholder packagePath day = do
+    contents <- TIO.readFile packagePath
+    let placeholder = "{{DAY_PAD}}"
+        replacement = T.pack ("day" <> show day)
+    TIO.writeFile packagePath (T.replace placeholder replacement contents)
+
 main :: IO ()
 main = do
     args <- execParser (info (argsParser <**> helper) (fullDesc <> progDesc "Fetch AoC puzzle statement and input"))
@@ -155,7 +172,7 @@ main = do
         baseUrl = "https://adventofcode.com/" <> show year <> "/day/" <> show day
     when (argDoSetup args) $ do
         let templateRoot = rootDir </> "templates" </> "day"
-        copyTemplateScaffold templateRoot outDir
+        ensureTemplateSetup templateRoot outDir day
     putStrLn $ "Fetching puzzle page from: " <> baseUrl
     problemHtml <- fetchText baseUrl session
     let inputUrl = baseUrl <> "/input"

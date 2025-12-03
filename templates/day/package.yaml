@@ -1,4 +1,4 @@
-name: day{{DAY_PAD}}
+name: {{DAY_PAD}}
 version: 0.1.0.0
 license: MIT
 github: "Sornaensis/aoc25"
@@ -9,7 +9,7 @@ extra-source-files:
   - input.txt
 
 executables:
-  day{{DAY_PAD}}-exe:
+  {{DAY_PAD}}-exe:
     main: Main.hs
     source-dirs: app
     ghc-options:
