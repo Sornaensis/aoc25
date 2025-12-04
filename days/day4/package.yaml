@@ -21,3 +21,5 @@ executables:
       - base >= 4.7 && < 5
       - array >= 0.5.8
       - parallel
+      - containers
+      - time
