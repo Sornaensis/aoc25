@@ -1,0 +1,22 @@
+# Build artifacts
+.stack-work/
+dist/
+dist-*
+
+# Profiling / coverage outputs
+*.prof
+*.aux
+*.hp
+*.eventlog
+
+# Local tooling noise
+*.hi
+*.o
+*.hie
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+
+input.txt
+problem.md

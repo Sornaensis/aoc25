@@ -1,4 +1,4 @@
-name: day3
+name: day4
 version: 0.1.0.0
 license: MIT
 github: "Sornaensis/aoc25"
@@ -9,15 +9,15 @@ extra-source-files:
   - input.txt
 
 executables:
-  day3-exe:
+  day4-exe:
     main: Main.hs
     source-dirs: app
     ghc-options:
-       - -Wall
+      - -Wall
       - -threaded
       - -rtsopts
       - "-with-rtsopts=-N16"
     dependencies:
       - base >= 4.7 && < 5
+      - array >= 0.5.8
       - parallel
-      - deepseq
