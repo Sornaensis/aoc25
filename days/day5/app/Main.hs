@@ -1,9 +1,9 @@
 module Main where
 
-import Control.Parallel.Strategies (parMap, rdeepseq)
+import Control.Parallel.Strategies (parMap, rdeepseq, rpar)
 
 import Data.Function ((&))
-import Data.List (break,foldr1)
+import Data.List (break,foldr1,foldl',sortBy)
 import Data.List.Split (splitOn)
 
 import System.Exit (exitFailure)
@@ -33,7 +33,20 @@ solve1 (Input ranges ids) = ids & parMap rdeepseq check .> filter id .> length
     mkCheck (a,b) = \c -> c >= a && c <= b
     checkRanges :: [Integer -> Bool]
     checkRanges = ranges & map mkCheck 
-    check n = parMap rdeepseq ($n) checkRanges & or
+    check n = parMap rpar ($n) checkRanges & or
+
+solve2 :: Input -> Integer
+solve2 (Input ranges _) =
+    let sorted = sortBy cmp ranges
+    in collect sorted & count
+    where
+    cmp (a,_) (c,_) = a `compare` c
+    combine n (a,b) = n + (b-a+1)
+    count = foldl' combine 0
+    collect []                = []
+    collect ((a,b):(c,d):rs)  | c <= b, d' <- max b d  = collect $ (a,d') : rs
+                              | otherwise              = (a,b) : collect ( (c,d) : rs )
+    collect rs                = rs
 
 main :: IO ()
 main = do
@@ -41,6 +54,8 @@ main = do
     case lines contents of
         [] -> putStrLn "Input is empty." >> exitFailure
         cs  -> do
-            let solution1 = cs & process .> solve1
+            let input = cs & process
+            let solution1 = solve1 input
             putStr "Part 1: " >> print solution1
-            putStrLn "Part 2: <todo>"
+            let solution2 = solve2 input
+            putStr "Part 2: " >> print solution2
