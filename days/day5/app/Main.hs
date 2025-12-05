@@ -32,8 +32,8 @@ solve1 (Input ranges ids) = ids & parMap rdeepseq check .> filter id .> length
     mkCheck :: (Integer,Integer) -> (Integer -> Bool)
     mkCheck (a,b) = \c -> c >= a && c <= b
     checkRanges :: [Integer -> Bool]
-    checkRanges = ranges & map mkCheck 
-    check n = parMap rpar ($n) checkRanges & or
+    checkRanges = ranges & parMap rpar mkCheck 
+    check n = map ($n) checkRanges & or
 
 solve2 :: Input -> Integer
 solve2 (Input ranges _) =
