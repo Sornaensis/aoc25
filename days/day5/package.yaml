@@ -1,0 +1,24 @@
+name: day5
+version: 0.1.0.0
+license: MIT
+github: "Sornaensis/aoc25"
+author: "Sornaensis"
+maintainer: "Sornaensis"
+extra-source-files:
+  - problem.md
+  - input.txt
+
+executables:
+  day5-exe:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -Wall
+      - -threaded
+      - -rtsopts
+      - "-with-rtsopts=-N16"
+    dependencies:
+      - base >= 4.7 && < 5
+      - parallel
+      - containers
+      - split
