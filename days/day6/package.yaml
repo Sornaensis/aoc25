@@ -1,0 +1,19 @@
+name: day6
+version: 0.1.0.0
+license: MIT
+github: "Sornaensis/aoc25"
+author: "Sornaensis"
+maintainer: "Sornaensis"
+extra-source-files:
+  - problem.md
+  - input.txt
+
+executables:
+  day6-exe:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -Wall
+    dependencies:
+      - base >= 4.7 && < 5
+      - parallel
